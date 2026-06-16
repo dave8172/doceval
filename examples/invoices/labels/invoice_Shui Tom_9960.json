@@ -1,0 +1,16 @@
+{
+  "vendor": "SuperStore",
+  "document_number": "9960",
+  "date": "Jul 27 2012",
+  "ship_mode": "Second Class",
+  "order_id": "MX-2012-ST2053039-41117",
+  "currency": "USD",
+  "subtotal": "6563.20",
+  "discount": "1312.64",
+  "shipping": "169.68",
+  "total": "5420.24",
+  "__meta__": {
+    "difficulty": "easy",
+    "doc_type": "invoice"
+  }
+}

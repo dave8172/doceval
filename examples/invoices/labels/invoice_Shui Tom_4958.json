@@ -1,0 +1,16 @@
+{
+  "vendor": "SuperStore",
+  "document_number": "4958",
+  "date": "Nov 21 2012",
+  "ship_mode": "First Class",
+  "order_id": "MX-2012-ST2053093-41234",
+  "currency": "USD",
+  "subtotal": "2257.54",
+  "discount": "4.52",
+  "shipping": "131.13",
+  "total": "2384.15",
+  "__meta__": {
+    "difficulty": "easy",
+    "doc_type": "invoice"
+  }
+}

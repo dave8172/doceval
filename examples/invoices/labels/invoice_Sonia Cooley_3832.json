@@ -1,0 +1,15 @@
+{
+  "vendor": "SuperStore",
+  "document_number": "3832",
+  "date": "May 20 2012",
+  "ship_mode": "Standard Class",
+  "order_id": "MX-2012-SC2057531-41049",
+  "currency": "USD",
+  "subtotal": "6041.60",
+  "shipping": "86.03",
+  "total": "6127.63",
+  "__meta__": {
+    "difficulty": "easy",
+    "doc_type": "invoice"
+  }
+}

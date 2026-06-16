@@ -1,0 +1,16 @@
+{
+  "vendor": "SuperStore",
+  "document_number": "9012",
+  "date": "Apr 06 2012",
+  "ship_mode": "Standard Class",
+  "order_id": "US-2012-SD2048582-41005",
+  "currency": "USD",
+  "subtotal": "2194.27",
+  "discount": "438.85",
+  "shipping": "88.86",
+  "total": "1844.28",
+  "__meta__": {
+    "difficulty": "easy",
+    "doc_type": "invoice"
+  }
+}

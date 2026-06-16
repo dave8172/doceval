@@ -1,0 +1,16 @@
+{
+  "vendor": "SuperStore",
+  "document_number": "1702",
+  "date": "Sep 14 2012",
+  "ship_mode": "First Class",
+  "order_id": "US-2012-SC2072518-41166",
+  "currency": "USD",
+  "subtotal": "6371.20",
+  "discount": "1274.24",
+  "shipping": "204.31",
+  "total": "5301.27",
+  "__meta__": {
+    "difficulty": "easy",
+    "doc_type": "invoice"
+  }
+}

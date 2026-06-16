@@ -1,0 +1,15 @@
+{
+  "vendor": "SuperStore",
+  "document_number": "13707",
+  "date": "May 04 2012",
+  "ship_mode": "Standard Class",
+  "order_id": "ES-2012-SC206958-41033",
+  "currency": "USD",
+  "subtotal": "4189.92",
+  "shipping": "90.56",
+  "total": "4280.48",
+  "__meta__": {
+    "difficulty": "easy",
+    "doc_type": "invoice"
+  }
+}

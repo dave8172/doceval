@@ -1,0 +1,15 @@
+{
+  "vendor": "SuperStore",
+  "document_number": "26367",
+  "date": "Dec 19 2012",
+  "ship_mode": "Standard Class",
+  "order_id": "IN-2012-SP2062011-41262",
+  "currency": "USD",
+  "subtotal": "11397.24",
+  "shipping": "115.50",
+  "total": "11512.74",
+  "__meta__": {
+    "difficulty": "easy",
+    "doc_type": "invoice"
+  }
+}

@@ -1,0 +1,16 @@
+{
+  "vendor": "SuperStore",
+  "document_number": "31134",
+  "date": "May 22 2012",
+  "ship_mode": "Second Class",
+  "order_id": "ID-2012-SW2045592-41051",
+  "currency": "USD",
+  "subtotal": "3071.81",
+  "discount": "1228.72",
+  "shipping": "111.94",
+  "total": "1955.03",
+  "__meta__": {
+    "difficulty": "easy",
+    "doc_type": "invoice"
+  }
+}

@@ -1,0 +1,16 @@
+{
+  "vendor": "SuperStore",
+  "document_number": "27922",
+  "date": "Sep 22 2012",
+  "ship_mode": "Standard Class",
+  "order_id": "IN-2012-SN207107-41174",
+  "currency": "USD",
+  "subtotal": "8546.18",
+  "discount": "854.62",
+  "shipping": "212.72",
+  "total": "7904.28",
+  "__meta__": {
+    "difficulty": "easy",
+    "doc_type": "invoice"
+  }
+}

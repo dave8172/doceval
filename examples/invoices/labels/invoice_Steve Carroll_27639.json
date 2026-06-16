@@ -1,0 +1,15 @@
+{
+  "vendor": "SuperStore",
+  "document_number": "27639",
+  "date": "Mar 07 2012",
+  "ship_mode": "Standard Class",
+  "order_id": "IN-2012-SC2068021-40975",
+  "currency": "USD",
+  "subtotal": "3990.87",
+  "shipping": "78.66",
+  "total": "4069.53",
+  "__meta__": {
+    "difficulty": "easy",
+    "doc_type": "invoice"
+  }
+}

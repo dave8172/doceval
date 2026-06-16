@@ -1,0 +1,15 @@
+{
+  "vendor": "SuperStore",
+  "document_number": "42735",
+  "date": "Jan 27 2013",
+  "ship_mode": "Second Class",
+  "order_id": "CT-2013-SC1072524-41301",
+  "currency": "USD",
+  "subtotal": "3904.32",
+  "shipping": "217.62",
+  "total": "4121.94",
+  "__meta__": {
+    "difficulty": "easy",
+    "doc_type": "invoice"
+  }
+}

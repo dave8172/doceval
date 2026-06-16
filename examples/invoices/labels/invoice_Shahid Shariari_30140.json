@@ -1,0 +1,15 @@
+{
+  "vendor": "SuperStore",
+  "document_number": "30140",
+  "date": "Nov 15 2012",
+  "ship_mode": "Same Day",
+  "order_id": "IN-2012-SS2041058-41228",
+  "currency": "USD",
+  "subtotal": "675.36",
+  "shipping": "73.00",
+  "total": "748.36",
+  "__meta__": {
+    "difficulty": "easy",
+    "doc_type": "invoice"
+  }
+}

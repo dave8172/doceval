@@ -1,0 +1,16 @@
+{
+  "vendor": "SuperStore",
+  "document_number": "14495",
+  "date": "Dec 27 2012",
+  "ship_mode": "Second Class",
+  "order_id": "IT-2012-SS2051591-41270",
+  "currency": "USD",
+  "subtotal": "7886.70",
+  "discount": "3943.35",
+  "shipping": "69.26",
+  "total": "4012.61",
+  "__meta__": {
+    "difficulty": "easy",
+    "doc_type": "invoice"
+  }
+}
