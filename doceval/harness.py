@@ -17,18 +17,26 @@ The extractor function signature:
     # OR return a 2-tuple to report per-document cost:
     def extract(doc_bytes: bytes, filepath: str) -> tuple[dict, float]
 
-Label files:
-    One JSON file per document, named <doc_stem>.json, containing a flat or
-    nested dict of expected field values.  An optional "__meta__" key holds
-    arbitrary metadata (e.g. difficulty, doc_type) that is passed through to
-    DocResult.metadata but not compared.
+Label files — either:
+    - One JSON file per document, named <doc_stem>.json, containing a flat or
+      nested dict of expected field values.  An optional "__meta__" key holds
+      arbitrary metadata (e.g. difficulty, doc_type) that is passed through to
+      DocResult.metadata but not compared.
+    - A single .csv / .jsonl / .ndjson manifest with a "filename" column/key
+      identifying each document (matched by stem). See _load_labels_csv /
+      _load_labels_jsonl.
 
 Supported document extensions: .pdf, .png, .jpg, .jpeg, .tiff, .tif, .webp
+
+Logging: doceval logs unpaired docs/labels and extractor failures via the
+"doceval" logger (stdlib logging). Call logging.basicConfig() to see them.
 """
 
 from __future__ import annotations
 
+import csv
 import json
+import logging
 import time
 from collections import defaultdict
 from datetime import datetime
@@ -40,23 +48,90 @@ from .types import DocResult, FieldResult, FieldStats, RunResult
 
 SUPPORTED_EXTENSIONS = {".pdf", ".png", ".jpg", ".jpeg", ".tiff", ".tif", ".webp"}
 
+logger = logging.getLogger("doceval")
+
 
 # ── Dataset loading ────────────────────────────────────────────────────────────
 
 def _find_documents(docs_dir: Path) -> dict[str, Path]:
-    """Return {stem: path} for all supported docs in docs_dir."""
+    """Return {stem: path} for all supported docs in docs_dir (recursive)."""
     found: dict[str, Path] = {}
-    for p in sorted(docs_dir.iterdir()):
-        if p.suffix.lower() in SUPPORTED_EXTENSIONS:
+    for p in sorted(docs_dir.rglob("*")):
+        if p.is_file() and p.suffix.lower() in SUPPORTED_EXTENSIONS:
             found[p.stem] = p
     return found
 
 
-def _load_labels(labels_dir: Path) -> dict[str, dict]:
+def _load_labels(labels_path: Path) -> dict[str, dict]:
+    """
+    Return {stem: label_dict} for a labels source.
+
+    labels_path may be:
+      - a directory of one .json file per document (stem must match the doc), or
+      - a single manifest file (.csv, .jsonl, or .ndjson) with one row/line per
+        document, identified by a "filename" column/key (matched by stem).
+    """
+    if labels_path.is_dir():
+        return _load_labels_dir(labels_path)
+    if labels_path.suffix.lower() == ".csv":
+        return _load_labels_csv(labels_path)
+    if labels_path.suffix.lower() in (".jsonl", ".ndjson"):
+        return _load_labels_jsonl(labels_path)
+    raise ValueError(
+        f"Unsupported labels path: {labels_path} "
+        "(expected a directory, or a .csv/.jsonl/.ndjson manifest file)"
+    )
+
+
+def _load_labels_dir(labels_dir: Path) -> dict[str, dict]:
     """Return {stem: label_dict} for all .json files in labels_dir."""
     found: dict[str, dict] = {}
     for p in sorted(labels_dir.glob("*.json")):
         found[p.stem] = json.loads(p.read_text())
+    return found
+
+
+def _manifest_stem(raw_id: str) -> str:
+    """Normalize a manifest "filename" value to a doc stem (strip any extension)."""
+    return Path(raw_id).stem
+
+
+def _load_labels_csv(path: Path) -> dict[str, dict]:
+    """
+    Return {stem: label_dict} from a CSV manifest.
+
+    Requires a "filename" column identifying each document (matched by stem,
+    extension optional). Every other column becomes a flat label field.
+    """
+    found: dict[str, dict] = {}
+    with path.open(newline="") as f:
+        reader = csv.DictReader(f)
+        if reader.fieldnames is None or "filename" not in reader.fieldnames:
+            raise ValueError(f'CSV label manifest {path} must have a "filename" column')
+        for row in reader:
+            stem = _manifest_stem(row["filename"])
+            found[stem] = {k: v for k, v in row.items() if k != "filename"}
+    return found
+
+
+def _load_labels_jsonl(path: Path) -> dict[str, dict]:
+    """
+    Return {stem: label_dict} from a JSONL/NDJSON manifest.
+
+    Each line is a JSON object with a "filename" key identifying the document
+    (matched by stem, extension optional). Remaining keys are the label dict,
+    with the same nesting / "__meta__" rules as per-file JSON labels.
+    """
+    found: dict[str, dict] = {}
+    for lineno, line in enumerate(path.read_text().splitlines(), start=1):
+        line = line.strip()
+        if not line:
+            continue
+        row = json.loads(line)
+        if "filename" not in row:
+            raise ValueError(f'{path}:{lineno}: JSONL label row missing "filename" key')
+        stem = _manifest_stem(row["filename"])
+        found[stem] = {k: v for k, v in row.items() if k != "filename"}
     return found
 
 
@@ -95,6 +170,7 @@ def _eval_document(
         doc_bytes = doc_path.read_bytes()
         raw = extract_fn(doc_bytes, str(doc_path))
     except Exception as exc:
+        logger.error("extractor failed on %s: %s", doc_path.name, exc)
         return DocResult(
             filename=doc_path.name,
             fields=[],
@@ -209,7 +285,10 @@ def run_eval(
 
     Args:
         docs_dir:          Directory containing documents.
-        labels_dir:        Directory containing label JSON files (one per doc).
+        labels_dir:        Either a directory of label JSON files (one per doc,
+                           named `<doc_stem>.json`), or a single `.csv` /
+                           `.jsonl` / `.ndjson` manifest file with a "filename"
+                           column/key identifying each document.
         extract_fn:        Callable(bytes, str) -> dict | (dict, float).
         extractor_name:    Display name used in reports.
         progress_callback: Optional fn(index, total, filename, result_or_none).
@@ -225,6 +304,11 @@ def run_eval(
     paired = sorted(set(documents_map) & set(labels_map))
     unpaired_docs = sorted(set(documents_map) - set(labels_map))
     unpaired_labels = sorted(set(labels_map) - set(documents_map))
+
+    for stem in unpaired_docs:
+        logger.warning("no label found for document: %s", documents_map[stem].name)
+    for stem in unpaired_labels:
+        logger.warning("no matching document for label: %s", stem)
 
     run_id = datetime.now().strftime("%Y-%m-%dT%H-%M-%S")
     doc_results: list[DocResult] = []
@@ -246,7 +330,7 @@ def run_eval(
         errors.append({"filename": documents_map[stem].name,
                        "error": "No matching label file found"})
     for stem in unpaired_labels:
-        errors.append({"filename": f"{stem}.json",
+        errors.append({"filename": stem,
                        "error": "No matching document file found"})
     for doc in doc_results:
         if doc.error:

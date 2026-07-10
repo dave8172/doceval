@@ -21,7 +21,59 @@ Without answers, "seems to work" is all you have. That's not good enough for pro
 
 ---
 
-## Quickstart
+## Try it in 60 seconds
+
+No API key setup, no writing an extractor — this runs a real Claude-based invoice
+extractor against 20 bundled sample PDFs and prints a full accuracy report.
+
+```bash
+git clone https://github.com/dave8172/doceval
+cd doceval
+pip install -e ".[examples]"
+export ANTHROPIC_API_KEY=sk-ant-...
+
+doceval run \
+  --docs    examples/invoices/docs \
+  --labels  examples/invoices/labels \
+  --extractor examples.invoices.extractor:extract \
+  --name "claude-haiku invoice extractor"
+```
+
+Output:
+
+```
+doceval run
+  docs:      examples/invoices/docs
+  labels:    examples/invoices/labels
+  extractor: claude-haiku invoice extractor
+  documents: 20 found
+
+[  1/20] invoice_Shahid Shariari_30140.pdf  ... 9/9 (100%)  1.3s  $0.0009
+[  2/20] invoice_Shaun Weien_31134.pdf      ... 10/10 (100%) 1.1s  $0.0008
+[  3/20] invoice_Sheri Gordon_1260.pdf      ... 8/9 (89%)   1.4s  $0.0009
+...
+
+==================================================
+Overall: 172/180 fields correct (95.6%)
+Successful: 20  Failed: 0
+
+Failure modes:
+  missed_field    : 5
+  wrong_format    : 3
+
+Cost: $0.0009/doc avg  ($0.0178 total)
+
+Report → eval-report-2026-07-01T14-22-10.md
+```
+
+The markdown report includes a field-level accuracy table, mismatch examples with
+failure mode tags, and the hardest documents ranked by accuracy. Open
+`examples/invoices/extractor.py` to see exactly what the extractor function looks like —
+it's the same shape you'll write for your own pipeline below.
+
+---
+
+## Use it on your own documents
 
 ```bash
 pip install doceval
@@ -71,36 +123,7 @@ doceval run \
   --extractor my_extractor:extract
 ```
 
----
-
-## Example output
-
-```
-doceval run
-  docs:      ./examples/invoices/docs
-  labels:    ./examples/invoices/labels
-  extractor: claude-haiku invoice extractor
-  documents: 20 found
-
-[  1/20] invoice_Shahid Shariari_30140.pdf  ... 9/9 (100%)  1.3s  $0.0009
-[  2/20] invoice_Shaun Weien_31134.pdf      ... 10/10 (100%) 1.1s  $0.0008
-[  3/20] invoice_Sheri Gordon_1260.pdf      ... 8/9 (89%)   1.4s  $0.0009
-...
-
-==================================================
-Overall: 172/180 fields correct (95.6%)
-Successful: 20  Failed: 0
-
-Failure modes:
-  missed_field    : 5
-  wrong_format    : 3
-
-Cost: $0.0009/doc avg  ($0.0178 total)
-
-Report → eval-report-2026-07-01T14-22-10.md
-```
-
-The markdown report includes a field-level accuracy table, mismatch examples with failure mode tags, and the hardest documents ranked by accuracy.
+This prints the same kind of report shown above, scored against your own labels.
 
 ---
 
@@ -143,6 +166,24 @@ Optional `__meta__` key passes through to the report (e.g., difficulty, document
 
 Nested dicts are supported and flattened with dot notation: `{"address": {"city": "NY"}}` → field `address.city`.
 
+**Manifest alternative:** for large datasets, hand-authoring one JSON file per document
+doesn't scale. Point `--labels` at a single `.csv` or `.jsonl`/`.ndjson` file instead —
+each row/line needs a `filename` column/key identifying the document (matched by stem;
+the extension is optional):
+
+```csv
+filename,vendor,date,total,invoice_number
+invoice_001,Acme Corp,2026-01-15,1234.56,INV-001
+invoice_002,Beta LLC,2026-01-20,540.00,INV-002
+```
+
+```bash
+doceval run --docs ./dataset/docs --labels ./labels.csv --extractor my_extractor:extract
+```
+
+JSONL supports the same nesting and `__meta__` passthrough as per-file JSON labels; CSV
+rows are flat by nature.
+
 ---
 
 ## Failure mode taxonomy
@@ -160,22 +201,66 @@ doceval handles numeric normalization (`$1,234.56` = `1234.56` = `1.234,56`) and
 
 ---
 
-## Try the example
-
-A working 20-document invoice dataset and Claude-based extractor are included:
+## CLI reference
 
 ```bash
-git clone https://github.com/dave8172/doceval
-cd doceval
-pip install -e ".[examples]"
-export ANTHROPIC_API_KEY=sk-ant-...
-
-doceval run \
-  --docs    examples/invoices/docs \
-  --labels  examples/invoices/labels \
-  --extractor examples.invoices.extractor:extract \
-  --name "claude-haiku invoice extractor"
+doceval run --docs DIR --labels DIR --extractor MODULE:FUNC [OPTIONS]
 ```
+
+| Flag | Required | Default | Meaning |
+|------|----------|---------|---------|
+| `--docs` | yes | — | Directory of documents to evaluate. Scanned recursively. |
+| `--labels` | yes | — | Directory of label JSON files, one per document (see [Label format](#label-format)). |
+| `--extractor` | yes | — | Extractor function as `module:function` (importable from cwd). |
+| `--name` | no | value of `--extractor` | Display name for the extractor in reports. |
+| `--output` | no | `eval-report-<run_id>.md` in cwd | Path for the generated Markdown report. |
+| `--json-out` | no | not written | Path to also write the full result as JSON (see [Output](#output) below). |
+| `--quiet` | no | off | Suppress per-document progress lines; only the final summary prints. |
+
+Only documents that have a matching label file (same stem) are scored. Unmatched
+documents or labels are listed as errors in the report rather than silently skipped.
+The process exits non-zero if any extraction raised an error, so `doceval run` is
+safe to use as a CI gate.
+
+---
+
+## Output
+
+Every run produces:
+
+1. **Console summary** — overall accuracy, failure mode counts, cost (if reported), always printed unless `--quiet`.
+2. **Markdown report** — written to `--output` (or an auto-named `eval-report-<timestamp>.md`). Includes a field-level accuracy table, up to 3 mismatch examples per field tagged with failure mode, and documents ranked by accuracy.
+3. **JSON report** *(optional, `--json-out`)* — the full result, useful for tracking accuracy over time or feeding a dashboard. Top-level shape:
+
+```json
+{
+  "run_id": "2026-07-01T14-22-10",
+  "extractor_name": "claude-haiku invoice extractor",
+  "total_documents": 20,
+  "successful": 20,
+  "failed": 0,
+  "fields_correct": 172,
+  "fields_total": 180,
+  "overall_accuracy": 0.9556,
+  "failure_modes": { "missed_field": 5, "wrong_format": 3 },
+  "by_field": {
+    "vendor": { "correct": 20, "total": 20, "failure_modes": {}, "examples": [] },
+    "total":  { "correct": 18, "total": 20, "failure_modes": { "wrong_format": 2 }, "examples": [ /* up to 3 */ ] }
+  },
+  "total_cost_usd": 0.0178,
+  "avg_cost_per_doc_usd": 0.0009,
+  "documents": [ /* per-document DocResult: filename, fields[], accuracy, duration_s, cost_usd, error */ ],
+  "errors": [ /* {"filename": ..., "error": ...} for unmatched docs/labels or extractor exceptions */ ]
+}
+```
+
+The same structure is what `run_eval()` returns as a `RunResult` object in the
+programmatic API below (as a dataclass, not JSON — access fields directly, e.g.
+`result.overall_accuracy`).
+
+doceval also logs unpaired docs/labels and extractor failures through the stdlib
+`logging` module (logger name `"doceval"`), independent of the console/report output.
+Call `logging.basicConfig()` in your own code to see them.
 
 ---
 

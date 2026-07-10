@@ -56,7 +56,7 @@ def cli():
 
 @cli.command()
 @click.option("--docs",      required=True,  type=click.Path(exists=True, file_okay=False), help="Directory of documents to evaluate.")
-@click.option("--labels",    required=True,  type=click.Path(exists=True, file_okay=False), help="Directory of label JSON files (one per document).")
+@click.option("--labels",    required=True,  type=click.Path(exists=True), help="Directory of label JSON files (one per document), or a .csv/.jsonl manifest.")
 @click.option("--extractor", required=True,  help="Extractor function as 'module:function'.")
 @click.option("--output",    default=None,   help="Path for the Markdown report (default: auto-named in cwd).")
 @click.option("--json-out",  default=None,   help="Path for the raw JSON results.")
