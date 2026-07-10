@@ -5,7 +5,7 @@ from pathlib import Path
 
 sys.path.insert(0, str(Path(__file__).parent.parent))
 
-from doceval.compare import compare_field
+from doceval.compare import compare_dicts, compare_field, flatten
 
 
 # ── Exact match ───────────────────────────────────────────────────────────────
@@ -105,3 +105,66 @@ def test_none_actual_vs_expected_value():
 def test_none_both():
     r = compare_field("customer_name", None, None)
     assert r.match is True
+
+
+# ── flatten ──────────────────────────────────────────────────────────────────
+
+def test_flatten_nested_dict():
+    assert flatten({"address": {"city": "NY", "zip": "10001"}}) == {
+        "address.city": "NY", "address.zip": "10001",
+    }
+
+
+def test_flatten_skips_meta_key():
+    assert flatten({"vendor": "Acme", "__meta__": {"difficulty": "hard"}}) == {
+        "vendor": "Acme",
+    }
+
+
+def test_flatten_list_value_is_json_encoded():
+    assert flatten({"tags": ["a", "b"]}) == {"tags": '["a", "b"]'}
+
+
+def test_flatten_none_value_becomes_empty_string():
+    assert flatten({"discount": None}) == {"discount": ""}
+
+
+# ── compare_dicts ──────────────────────────────────────────────────────────────
+
+def test_compare_dicts_all_match():
+    results = compare_dicts(
+        {"vendor": "Acme Corp", "total": "100.00"},
+        {"vendor": "Acme Corp", "total": "100.00"},
+    )
+    assert len(results) == 2
+    assert all(r.match for r in results)
+
+
+def test_compare_dicts_reports_mismatches():
+    results = compare_dicts(
+        {"vendor": "Acme Corp", "total": "100.00"},
+        {"vendor": "Beta LLC", "total": "100.00"},
+    )
+    by_field = {r.field: r for r in results}
+    assert by_field["vendor"].match is False
+    assert by_field["vendor"].failure_mode == "wrong_value"
+    assert by_field["total"].match is True
+
+
+def test_compare_dicts_only_scores_expected_fields():
+    results = compare_dicts(
+        {"vendor": "Acme Corp"},
+        {"vendor": "Acme Corp", "extra_field": "should not be scored"},
+    )
+    assert len(results) == 1
+    assert results[0].field == "vendor"
+
+
+def test_compare_dicts_handles_nested_input():
+    results = compare_dicts(
+        {"address": {"city": "NY"}},
+        {"address": {"city": "NY"}},
+    )
+    assert len(results) == 1
+    assert results[0].field == "address.city"
+    assert results[0].match is True

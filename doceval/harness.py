@@ -43,8 +43,8 @@ from datetime import datetime
 from pathlib import Path
 from typing import Callable
 
-from .compare import compare_field
-from .types import DocResult, FieldResult, FieldStats, RunResult
+from .compare import compare_dicts
+from .types import DocResult, FieldStats, RunResult
 
 SUPPORTED_EXTENSIONS = {".pdf", ".png", ".jpg", ".jpeg", ".tiff", ".tif", ".webp"}
 
@@ -135,26 +135,6 @@ def _load_labels_jsonl(path: Path) -> dict[str, dict]:
     return found
 
 
-def _flatten(obj: dict, prefix: str = "") -> dict[str, str]:
-    """
-    Flatten a nested label dict into dot-separated keys.
-    e.g. {"address": {"city": "NY"}} → {"address.city": "NY"}
-    Skips the reserved "__meta__" key.
-    """
-    out: dict[str, str] = {}
-    for k, v in obj.items():
-        if k == "__meta__":
-            continue
-        full_key = f"{prefix}.{k}" if prefix else k
-        if isinstance(v, dict):
-            out.update(_flatten(v, full_key))
-        elif isinstance(v, list):
-            out[full_key] = json.dumps(v)
-        else:
-            out[full_key] = "" if v is None else str(v)
-    return out
-
-
 # ── Per-document eval ──────────────────────────────────────────────────────────
 
 def _eval_document(
@@ -163,7 +143,6 @@ def _eval_document(
     extract_fn: Callable,
 ) -> DocResult:
     metadata = label.get("__meta__", {})
-    ground_truth = _flatten(label)
 
     t0 = time.monotonic()
     try:
@@ -205,14 +184,7 @@ def _eval_document(
             metadata=metadata,
         )
 
-    flat_extraction = _flatten(extraction)
-
-    # Compare only fields present in the ground truth
-    field_results: list[FieldResult] = []
-    for field, expected_val in ground_truth.items():
-        actual_val = flat_extraction.get(field)
-        fr = compare_field(field, expected_val, actual_val)
-        field_results.append(fr)
+    field_results = compare_dicts(label, extraction)
 
     fields_correct = sum(r.match for r in field_results)
     fields_total = len(field_results)

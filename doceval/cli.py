@@ -13,7 +13,6 @@ Usage:
 
 from __future__ import annotations
 
-import importlib
 import json
 import sys
 from pathlib import Path
@@ -21,32 +20,16 @@ from pathlib import Path
 import click
 
 from .harness import run_eval
+from .loader import load_callable
 from .report import generate_report
 
 
 def _load_extractor(spec: str):
-    """Load a function from a 'module:function' specifier."""
-    if ":" not in spec:
-        raise click.BadParameter(
-            f"Extractor must be specified as 'module:function', got: {spec!r}"
-        )
-    module_path, fn_name = spec.rsplit(":", 1)
-
-    # Allow relative imports by ensuring cwd is on sys.path
-    cwd = str(Path.cwd())
-    if cwd not in sys.path:
-        sys.path.insert(0, cwd)
-
+    """Load a function from a 'module:function' specifier, as a CLI parameter error."""
     try:
-        module = importlib.import_module(module_path)
-    except ModuleNotFoundError as exc:
-        raise click.BadParameter(f"Cannot import module '{module_path}': {exc}") from exc
-
-    if not hasattr(module, fn_name):
-        raise click.BadParameter(
-            f"Function '{fn_name}' not found in module '{module_path}'"
-        )
-    return getattr(module, fn_name)
+        return load_callable(spec)
+    except ValueError as exc:
+        raise click.BadParameter(str(exc)) from exc
 
 
 @click.group()

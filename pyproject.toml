@@ -4,12 +4,12 @@ build-backend = "hatchling.build"
 
 [project]
 name = "doceval"
-version = "0.2.0"
+version = "0.3.0"
 description = "Eval harness for document extraction pipelines — field-level accuracy, failure taxonomy, cost tracking"
 readme = "README.md"
 license = { text = "MIT" }
 requires-python = ">=3.10"
-keywords = ["document-extraction", "llm", "evaluation", "ocr", "accuracy"]
+keywords = ["document-extraction", "llm", "evaluation", "ocr", "accuracy", "mcp", "agent-tools"]
 classifiers = [
     "Development Status :: 3 - Alpha",
     "Intended Audience :: Developers",
@@ -26,12 +26,16 @@ examples = [
     "anthropic>=0.40",
     "python-dotenv>=1.0",
 ]
+mcp = [
+    "mcp>=1.0",
+]
 dev = [
     "pytest>=8.0",
 ]
 
 [project.scripts]
 doceval = "doceval.cli:main"
+doceval-mcp = "doceval.mcp_server:main"
 
 [project.urls]
 Homepage = "https://github.com/dave8172/doceval"

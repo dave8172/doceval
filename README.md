@@ -285,6 +285,42 @@ Path("report.md").write_text(generate_report(result))
 
 ---
 
+## MCP server (for AI agents)
+
+doceval ships an [MCP](https://modelcontextprotocol.io) server so an AI coding
+agent (Claude Code, Claude Desktop, Cursor, etc.) can score extraction accuracy
+itself — useful when an agent is building or debugging an extraction pipeline
+and wants to check its own output against ground truth, without shelling out.
+
+```bash
+pip install "doceval[mcp]"
+```
+
+Two tools:
+
+| Tool | What it does |
+|------|--------------|
+| `score_extraction(expected, actual)` | Score one extraction result against expected values — no filesystem access needed, pass both dicts directly. Same field-level accuracy + failure-mode taxonomy as everything else in doceval. |
+| `run_eval(docs_dir, labels_dir, extractor)` | Run a full eval over a docs/labels dataset on disk using a Python extractor function. Returns the structured result plus a rendered Markdown report. |
+
+Configure it in an MCP client by pointing at the `doceval-mcp` command over stdio.
+For Claude Code / Claude Desktop, add to your MCP config (e.g. `.mcp.json`):
+
+```json
+{
+  "mcpServers": {
+    "doceval": {
+      "command": "doceval-mcp"
+    }
+  }
+}
+```
+
+Or run it directly to confirm it starts: `doceval-mcp` (it speaks MCP over
+stdio — it'll sit waiting for a client, `Ctrl+C` to exit).
+
+---
+
 ## Supported document types
 
 PDF, PNG, JPG, JPEG, TIFF, WEBP

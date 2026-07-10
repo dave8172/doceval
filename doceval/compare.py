@@ -12,6 +12,7 @@ with a match flag and, on mismatch, a failure_mode classification:
 
 from __future__ import annotations
 
+import json
 import re
 from datetime import date
 
@@ -126,7 +127,45 @@ def _classify_failure(field: str, expected: str, actual: str) -> str:
     return "wrong_value"
 
 
+# ── Flattening ─────────────────────────────────────────────────────────────────
+
+def flatten(obj: dict, prefix: str = "") -> dict[str, str]:
+    """
+    Flatten a nested dict into dot-separated keys.
+    e.g. {"address": {"city": "NY"}} → {"address.city": "NY"}
+    Skips the reserved "__meta__" key.
+    """
+    out: dict[str, str] = {}
+    for k, v in obj.items():
+        if k == "__meta__":
+            continue
+        full_key = f"{prefix}.{k}" if prefix else k
+        if isinstance(v, dict):
+            out.update(flatten(v, full_key))
+        elif isinstance(v, list):
+            out[full_key] = json.dumps(v)
+        else:
+            out[full_key] = "" if v is None else str(v)
+    return out
+
+
 # ── Public API ─────────────────────────────────────────────────────────────────
+
+def compare_dicts(expected: dict, actual: dict) -> list[FieldResult]:
+    """
+    Compare two (possibly nested) dicts field-by-field.
+
+    Both are flattened first (dot notation for nested keys); only fields present
+    in `expected` are scored, matching doceval's "extra fields aren't wrong"
+    convention. Use this to score a single extraction without a full run_eval().
+    """
+    flat_expected = flatten(expected)
+    flat_actual = flatten(actual)
+    return [
+        compare_field(field, expected_val, flat_actual.get(field))
+        for field, expected_val in flat_expected.items()
+    ]
+
 
 def compare_field(field: str, expected: str | None, actual: str | None) -> FieldResult:
     """
