@@ -9,3 +9,6 @@ build/
 .env
 *.md.bak
 eval-report-*.md
+
+# Internal working context for Claude sessions — this repo is PUBLIC, keep it local
+CLAUDE.md
