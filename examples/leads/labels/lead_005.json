@@ -1,0 +1,14 @@
+{
+  "company": "Riverbend Joinery",
+  "contact_name": "Toby Nkemelu",
+  "email": "toby@riverbendjoinery.co.uk",
+  "phone": "07700 900412",
+  "product": "18mm birch ply",
+  "quantity": "120",
+  "target_date": "2026-09-01",
+  "budget": null,
+  "__meta__": {
+    "difficulty": "easy",
+    "source": "web form"
+  }
+}

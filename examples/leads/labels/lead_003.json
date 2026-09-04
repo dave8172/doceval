@@ -1,0 +1,14 @@
+{
+  "company": "Vasanth Motors",
+  "contact_name": "K. Vasanth",
+  "email": "procurement@vasanth-motors.com",
+  "phone": "9944012233",
+  "product": "M10 x 40 hex bolts; M10 nuts",
+  "quantity": "2000",
+  "target_date": "2026-08-25",
+  "budget": null,
+  "__meta__": {
+    "difficulty": "medium",
+    "source": "terse RFQ"
+  }
+}

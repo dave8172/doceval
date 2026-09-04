@@ -181,3 +181,26 @@ def test_run_accepts_csv_manifest_for_labels(tmp_path):
 
     assert result.exit_code == 0, result.output
     assert "Overall: 2/2 fields correct (100.0%)" in result.output
+
+
+def test_document_count_matches_recursive_discovery(tmp_path, paired_dataset):
+    """The 'N found' line must count what run_eval actually evaluates, including
+    files in subdirectories and non-document inputs."""
+    docs_dir, labels_dir = _dataset(paired_dataset)
+    nested = docs_dir / "inbox"
+    nested.mkdir()
+    nested.joinpath("lead1.eml").write_text("raw email")
+    labels_dir.joinpath("lead1.json").write_text(json.dumps({
+        "vendor": "Acme Corp", "total": "100.00",
+    }))
+    _write_extractor_module(tmp_path, HAPPY_EXTRACTOR)
+
+    runner = CliRunner()
+    result = runner.invoke(cli, [
+        "run", "--docs", str(docs_dir), "--labels", str(labels_dir),
+        "--extractor", "my_extractor:extract",
+    ])
+
+    assert result.exit_code == 0, result.output
+    assert "documents: 2 found" in result.output
+    assert "Overall: 4/4 fields correct (100.0%)" in result.output

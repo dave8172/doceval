@@ -1,0 +1,14 @@
+{
+  "company": null,
+  "contact_name": null,
+  "email": null,
+  "phone": null,
+  "product": "galvanised steel conduit",
+  "quantity": null,
+  "target_date": "2026-09-12",
+  "budget": null,
+  "__meta__": {
+    "difficulty": "hard",
+    "source": "automated notice, no contact"
+  }
+}

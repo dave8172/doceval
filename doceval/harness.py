@@ -5,7 +5,7 @@ Usage (programmatic):
     from doceval.harness import run_eval
 
     result = run_eval(
-        docs_dir="./dataset/docs",
+        docs_dir="./dataset/docs",   # any supported files, not only documents
         labels_dir="./dataset/labels",
         extract_fn=my_extractor,        # def extract(bytes, str) -> dict
                                         # or -> (dict, float) with cost
@@ -26,7 +26,12 @@ Label files — either:
       identifying each document (matched by stem). See _load_labels_csv /
       _load_labels_jsonl.
 
-Supported document extensions: .pdf, .png, .jpg, .jpeg, .tiff, .tif, .webp
+Supported input extensions:
+    documents — .pdf, .png, .jpg, .jpeg, .tiff, .tif, .webp
+    text      — .txt, .md, .json, .jsonl, .ndjson, .csv, .tsv, .html, .htm,
+                .xml, .eml, .msg, .vtt, .srt
+Any of these is read as bytes and handed to the extractor unchanged, so an
+email, an HTML page, a transcript or a feed dump evaluates exactly like a PDF.
 
 Logging: doceval logs unpaired docs/labels and extractor failures via the
 "doceval" logger (stdlib logging). Call logging.basicConfig() to see them.
@@ -46,7 +51,16 @@ from typing import Callable
 from .compare import compare_dicts
 from .types import DocResult, FieldStats, RunResult
 
-SUPPORTED_EXTENSIONS = {".pdf", ".png", ".jpg", ".jpeg", ".tiff", ".tif", ".webp"}
+# doceval scores field-level extraction correctness, and that has never depended
+# on the input being a document — the scoring, failure-taxonomy and cost layers
+# are format-blind. These sets exist only so directory scanning has something to
+# match on. Widened 2026-09-04 beyond documents; see README → "What it evaluates".
+DOCUMENT_EXTENSIONS = {".pdf", ".png", ".jpg", ".jpeg", ".tiff", ".tif", ".webp"}
+TEXT_EXTENSIONS = {
+    ".txt", ".md", ".json", ".jsonl", ".ndjson", ".csv", ".tsv",
+    ".html", ".htm", ".xml", ".eml", ".msg", ".vtt", ".srt",
+}
+SUPPORTED_EXTENSIONS = DOCUMENT_EXTENSIONS | TEXT_EXTENSIONS
 
 logger = logging.getLogger("doceval")
 
@@ -54,7 +68,7 @@ logger = logging.getLogger("doceval")
 # ── Dataset loading ────────────────────────────────────────────────────────────
 
 def _find_documents(docs_dir: Path) -> dict[str, Path]:
-    """Return {stem: path} for all supported docs in docs_dir (recursive)."""
+    """Return {stem: path} for all supported input files in docs_dir (recursive)."""
     found: dict[str, Path] = {}
     for p in sorted(docs_dir.rglob("*")):
         if p.is_file() and p.suffix.lower() in SUPPORTED_EXTENSIONS:
@@ -256,7 +270,8 @@ def run_eval(
     Run a full evaluation and return a RunResult.
 
     Args:
-        docs_dir:          Directory containing documents.
+        docs_dir:          Directory containing the input files to evaluate
+                           (documents or text — see SUPPORTED_EXTENSIONS).
         labels_dir:        Either a directory of label JSON files (one per doc,
                            named `<doc_stem>.json`), or a single `.csv` /
                            `.jsonl` / `.ndjson` manifest file with a "filename"

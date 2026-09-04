@@ -3,7 +3,7 @@ doceval CLI — entry point for `doceval run`.
 
 Usage:
     doceval run \\
-        --docs    ./dataset/docs \\
+        --docs    ./dataset/docs \\        # any supported files, not only documents
         --labels  ./dataset/labels \\
         --extractor my_module:extract \\
         [--output report.md] \\
@@ -19,7 +19,7 @@ from pathlib import Path
 
 import click
 
-from .harness import run_eval
+from .harness import SUPPORTED_EXTENSIONS, run_eval
 from .loader import load_callable
 from .report import generate_report
 
@@ -34,11 +34,11 @@ def _load_extractor(spec: str):
 
 @click.group()
 def cli():
-    """doceval — eval harness for document extraction pipelines."""
+    """doceval — eval harness for extraction pipelines."""
 
 
 @cli.command()
-@click.option("--docs",      required=True,  type=click.Path(exists=True, file_okay=False), help="Directory of documents to evaluate.")
+@click.option("--docs",      required=True,  type=click.Path(exists=True, file_okay=False), help="Directory of input files to evaluate (documents, emails, HTML, transcripts, feeds).")
 @click.option("--labels",    required=True,  type=click.Path(exists=True), help="Directory of label JSON files (one per document), or a .csv/.jsonl manifest.")
 @click.option("--extractor", required=True,  help="Extractor function as 'module:function'.")
 @click.option("--output",    default=None,   help="Path for the Markdown report (default: auto-named in cwd).")
@@ -50,9 +50,11 @@ def run(docs, labels, extractor, output, json_out, name, quiet):
     extract_fn = _load_extractor(extractor)
     extractor_name = name or extractor
 
+    # rglob, not iterdir: run_eval discovers recursively, and the count printed
+    # here has to be the count actually evaluated.
     total_docs = sum(
-        1 for p in Path(docs).iterdir()
-        if p.suffix.lower() in {".pdf", ".png", ".jpg", ".jpeg", ".tiff", ".tif", ".webp"}
+        1 for p in Path(docs).rglob("*")
+        if p.is_file() and p.suffix.lower() in SUPPORTED_EXTENSIONS
     )
 
     if not quiet:

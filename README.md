@@ -1,10 +1,10 @@
 # doceval
 
-**Eval harness for document extraction pipelines.**
+**Eval harness for extraction pipelines.**
 
 Point it at your extractor + a labeled dataset. Get back field-level accuracy, a failure taxonomy, and optional cost tracking — without writing any eval infrastructure yourself.
 
-Works with any extraction function (Claude, GPT, regex, rules) and any document schema.
+Works with any extraction function (Claude, GPT, regex, rules), any schema, and any input — PDFs and scans, but equally emails, HTML pages, transcripts or feed dumps. What it scores is whether the extracted *fields* are right, which never depended on the source being a document.
 
 ---
 
@@ -73,7 +73,7 @@ it's the same shape you'll write for your own pipeline below.
 
 ---
 
-## Use it on your own documents
+## Use it on your own data
 
 ```bash
 pip install doceval
@@ -209,7 +209,7 @@ doceval run --docs DIR --labels DIR --extractor MODULE:FUNC [OPTIONS]
 
 | Flag | Required | Default | Meaning |
 |------|----------|---------|---------|
-| `--docs` | yes | — | Directory of documents to evaluate. Scanned recursively. |
+| `--docs` | yes | — | Directory of input files to evaluate (documents or text — see [Supported inputs](#supported-inputs)). Scanned recursively. |
 | `--labels` | yes | — | Directory of label JSON files, one per document (see [Label format](#label-format)). |
 | `--extractor` | yes | — | Extractor function as `module:function` (importable from cwd). |
 | `--name` | no | value of `--extractor` | Display name for the extractor in reports. |
@@ -321,15 +321,40 @@ stdio — it'll sit waiting for a client, `Ctrl+C` to exit).
 
 ---
 
-## Supported document types
+## Supported inputs
 
-PDF, PNG, JPG, JPEG, TIFF, WEBP
+**Documents** — PDF, PNG, JPG, JPEG, TIFF, WEBP
+
+**Text** — TXT, MD, JSON, JSONL, NDJSON, CSV, TSV, HTML, HTM, XML, EML, MSG, VTT, SRT
+
+Every file is read as bytes and handed to your extractor unchanged, so the harness
+treats an email exactly the way it treats a scanned invoice. Anything outside these
+lists is skipped rather than guessed at; add an extension to
+`doceval.harness.SUPPORTED_EXTENSIONS` if you need one.
+
+### A worked non-document example
+
+`examples/leads/` runs the same harness over eight inbound sales emails — a forwarded
+thread, a terse RFQ, a web-form dump, an automated tender notice with no contact
+details, and one enquiry in Italian:
+
+```bash
+doceval run \
+  --docs    examples/leads/docs \
+  --labels  examples/leads/labels \
+  --extractor examples.leads.extractor:extract \
+  --name "claude-haiku lead extractor"
+```
+
+Several of those emails are deliberately *not* live enquiries, so an extractor that
+invents a quantity or a budget for them scores worse rather than better. That is the
+point of measuring fields instead of output shape.
 
 ---
 
 ## Why this exists
 
-Shipping an LLM extraction pipeline without eval infrastructure is building on sand. Field-level accuracy by document type, a failure taxonomy, and cost visibility are the minimum bar before calling something production-ready.
+Shipping an LLM extraction pipeline without eval infrastructure is building on sand. Field-level accuracy, a failure taxonomy, and cost visibility are the minimum bar before calling something production-ready.
 
 This tool exists so you don't have to build that infrastructure from scratch.
 

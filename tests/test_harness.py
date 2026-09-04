@@ -295,3 +295,42 @@ def test_unsupported_labels_path_raises(tmp_path):
         assert False, "expected ValueError"
     except ValueError as exc:
         assert "Unsupported labels path" in str(exc)
+
+
+# ── Non-document inputs ───────────────────────────────────────────────────────
+
+def test_text_inputs_are_discovered_and_evaluated(tmp_path):
+    """An email, an HTML page and a transcript evaluate exactly like a PDF."""
+    docs_dir = tmp_path / "docs"
+    labels_dir = tmp_path / "labels"
+    docs_dir.mkdir()
+    labels_dir.mkdir()
+
+    for stem, ext in [("lead_001", ".eml"), ("page_002", ".html"), ("call_003", ".vtt")]:
+        docs_dir.joinpath(f"{stem}{ext}").write_text(f"raw {stem}")
+        labels_dir.joinpath(f"{stem}.json").write_text(json.dumps({"company": "Acme"}))
+
+    result = run_eval(docs_dir, labels_dir, lambda b, f: {"company": "Acme"})
+
+    assert result.total_documents == 3
+    assert result.overall_accuracy == 1.0
+    assert result.errors == []
+
+
+def test_unsupported_extension_is_still_ignored(tmp_path):
+    """Widening the allowlist did not turn it into 'accept anything'."""
+    docs_dir = tmp_path / "docs"
+    labels_dir = tmp_path / "labels"
+    docs_dir.mkdir()
+    labels_dir.mkdir()
+
+    docs_dir.joinpath("lead_001.eml").write_text("raw email")
+    docs_dir.joinpath("archive.zip").write_bytes(b"PK\x03\x04")
+    labels_dir.joinpath("lead_001.json").write_text(json.dumps({"company": "Acme"}))
+    labels_dir.joinpath("archive.json").write_text(json.dumps({"company": "Acme"}))
+
+    result = run_eval(docs_dir, labels_dir, lambda b, f: {"company": "Acme"})
+
+    assert result.total_documents == 1
+    assert any(e["filename"] == "archive" and "No matching document" in e["error"]
+               for e in result.errors)
