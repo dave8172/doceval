@@ -4,7 +4,7 @@ build-backend = "hatchling.build"
 
 [project]
 name = "doceval"
-version = "0.4.1"
+version = "0.4.2"
 description = "Eval harness for LLM extraction pipelines — field-level accuracy, failure taxonomy, cost tracking. Documents, emails, HTML, transcripts, feeds."
 readme = "README.md"
 license = "MIT"
@@ -32,7 +32,10 @@ examples = [
     "python-dotenv>=1.0",
 ]
 mcp = [
-    "mcp>=1.0",
+    # Pinned below 2.0: mcp_server.py is v1 code. MCP 2.x renamed FastMCP to
+    # MCPServer and changed other APIs, so an unpinned install breaks the extra.
+    # Caught by CI on 2026-09-04 — a local venv holding mcp 1.x had hidden it.
+    "mcp>=1.0,<2",
 ]
 dev = [
     "pytest>=8.0",
