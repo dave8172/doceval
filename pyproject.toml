@@ -1,21 +1,26 @@
 [build-system]
-requires = ["hatchling"]
+requires = ["hatchling>=1.27"]   # >=1.27 for SPDX license expressions
 build-backend = "hatchling.build"
 
 [project]
 name = "doceval"
-version = "0.4.0"
-description = "Eval harness for document extraction pipelines — field-level accuracy, failure taxonomy, cost tracking"
+version = "0.4.1"
+description = "Eval harness for LLM extraction pipelines — field-level accuracy, failure taxonomy, cost tracking. Documents, emails, HTML, transcripts, feeds."
 readme = "README.md"
-license = { text = "MIT" }
+license = "MIT"
+license-files = ["LICENSE"]
+authors = [{ name = "dave8172", email = "mdhawal94@gmail.com" }]
 requires-python = ">=3.10"
-keywords = ["document-extraction", "llm", "evaluation", "ocr", "accuracy", "mcp", "agent-tools"]
+keywords = ["extraction", "document-extraction", "llm", "evaluation", "evals", "ocr", "accuracy", "mcp", "agent-tools"]
 classifiers = [
     "Development Status :: 3 - Alpha",
     "Intended Audience :: Developers",
-    "License :: OSI Approved :: MIT License",
     "Programming Language :: Python :: 3",
+    "Programming Language :: Python :: 3.10",
+    "Programming Language :: Python :: 3.11",
+    "Programming Language :: Python :: 3.12",
     "Topic :: Scientific/Engineering :: Artificial Intelligence",
+    "Topic :: Software Development :: Testing",
 ]
 dependencies = [
     "click>=8.0",
@@ -39,7 +44,9 @@ doceval-mcp = "doceval.mcp_server:main"
 
 [project.urls]
 Homepage = "https://github.com/dave8172/doceval"
+Repository = "https://github.com/dave8172/doceval"
 Issues = "https://github.com/dave8172/doceval/issues"
+Changelog = "https://github.com/dave8172/doceval/releases"
 
 [tool.hatch.build.targets.wheel]
 packages = ["doceval"]
