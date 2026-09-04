@@ -76,10 +76,8 @@ it's the same shape you'll write for your own pipeline below.
 ## Use it on your own data
 
 ```bash
-pip install git+https://github.com/dave8172/doceval
+pip install doceval
 ```
-
-*(Not on PyPI yet — install from the repo.)*
 
 Write an extractor — a Python function that takes `(doc_bytes, filepath)` and returns a dict:
 
@@ -295,7 +293,7 @@ itself — useful when an agent is building or debugging an extraction pipeline
 and wants to check its own output against ground truth, without shelling out.
 
 ```bash
-pip install "doceval[mcp] @ git+https://github.com/dave8172/doceval"
+pip install "doceval[mcp]"
 ```
 
 Two tools:
