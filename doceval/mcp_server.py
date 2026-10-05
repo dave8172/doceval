@@ -22,14 +22,23 @@ from __future__ import annotations
 from dataclasses import asdict
 from typing import Any
 
-from mcp.server.fastmcp import FastMCP
+# The MCP Python SDK renamed its server class in 2.0 (FastMCP -> MCPServer).
+# Everything doceval uses (the constructor, @tool(), run()) is otherwise the
+# same in both, so try the 2.x name first and fall back to 1.x, rather than
+# pinning users to one major version. CI tests the oldest supported version and
+# the newest release, plus a weekly run against the newest, so the next rename
+# is caught here before a user hits it.
+try:
+    from mcp.server import MCPServer as _Server
+except ImportError:
+    from mcp.server.fastmcp import FastMCP as _Server
 
 from .compare import compare_dicts
 from .harness import run_eval as _run_eval
 from .loader import load_callable
 from .report import generate_report
 
-mcp = FastMCP(
+mcp = _Server(
     "doceval",
     instructions=(
         "Score LLM document-extraction accuracy against ground-truth labels. "

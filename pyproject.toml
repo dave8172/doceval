@@ -4,7 +4,7 @@ build-backend = "hatchling.build"
 
 [project]
 name = "doceval"
-version = "0.4.2"
+version = "0.5.0"
 description = "Eval harness for LLM extraction pipelines — field-level accuracy, failure taxonomy, cost tracking. Documents, emails, HTML, transcripts, feeds."
 readme = "README.md"
 license = "MIT"
@@ -19,6 +19,7 @@ classifiers = [
     "Programming Language :: Python :: 3.10",
     "Programming Language :: Python :: 3.11",
     "Programming Language :: Python :: 3.12",
+    "Programming Language :: Python :: 3.13",
     "Topic :: Scientific/Engineering :: Artificial Intelligence",
     "Topic :: Software Development :: Testing",
 ]
@@ -32,10 +33,11 @@ examples = [
     "python-dotenv>=1.0",
 ]
 mcp = [
-    # Pinned below 2.0: mcp_server.py is v1 code. MCP 2.x renamed FastMCP to
-    # MCPServer and changed other APIs, so an unpinned install breaks the extra.
-    # Caught by CI on 2026-09-04 — a local venv holding mcp 1.x had hidden it.
-    "mcp>=1.0,<2",
+    # No upper cap: mcp_server.py works on 1.x and 2.x. 1.3 is the floor because
+    # earlier 1.x accepts the server's `instructions` but silently drops them.
+    # CI tests both ends of the range and runs weekly against the newest release.
+    # History: 0.4.2 pinned <2 after 2.x renamed FastMCP to MCPServer.
+    "mcp>=1.3",
 ]
 dev = [
     "pytest>=8.0",
