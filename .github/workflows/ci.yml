@@ -17,7 +17,7 @@ jobs:
       fail-fast: false
       matrix:
         include:
-          # Both ends of the supported MCP range (pyproject: mcp>=1.3).
+          # Both ends of the supported MCP range (pyproject: mcp>=1.21.1).
           - { python-version: "3.10", mcp: "oldest" }
           - { python-version: "3.10", mcp: "newest" }
           - { python-version: "3.13", mcp: "newest" }
@@ -33,7 +33,7 @@ jobs:
           pip install -e ".[dev,mcp]"
       - name: Pin the oldest supported MCP
         if: matrix.mcp == 'oldest'
-        run: pip install "mcp==1.3.0"
+        run: pip install "mcp==1.21.1"
       - name: Show what was installed
         run: pip show mcp | head -2
       - name: Tests, including the MCP server over stdio

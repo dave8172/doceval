@@ -296,7 +296,7 @@ and wants to check its own output against ground truth, without shelling out.
 pip install "doceval[mcp]"
 ```
 
-Works with the MCP Python SDK 1.3 and later, including 2.x. CI tests the oldest
+Works with the MCP Python SDK 1.21.1 and later, including 2.x. CI tests the oldest
 supported version and the newest release on every push, and again every week
 against whatever is newest.
 
